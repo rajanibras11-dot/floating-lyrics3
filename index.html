@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Floating Lyrics</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #050505;
+  color: white;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
+
+.window {
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: #050505;
+}
+
+#stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.lyrics {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(22px, 5vw, 34px);
+  font-weight: bold;
+  text-align: center;
+  padding: 24px;
+  animation: float 3s ease-in-out infinite;
+  transition: opacity .4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+
+.controls {
+  position: absolute;
+  bottom: 22px;
+  z-index: 2;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+button {
+  background: #222;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 20px;
+  padding: 10px 16px;
+}
+
+#song { display: none; }
+</style>
+</head>
+<body>
+<div class="window">
+  <canvas id="stars"></canvas>
+  <div class="lyrics" id="lyric">Your lyrics here</div>
+
+  <div class="controls">
+    <button onclick="document.getElementById('song').click()">
+      Pilih lagu
+    </button>
+    <button id="play">▶ Play</button>
+  </div>
+</div>
+
+<input id="song" type="file" accept="audio/*">
+
+<script>
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+let stars = [];
+
+function resize() {
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+  stars = Array.from({length: 100}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    speed: .3 + Math.random() * 1.5,
+    size: .5 + Math.random() * 1.5
+  }));
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'white';
+
+  stars.forEach(s => {
+    ctx.globalAlpha = .35 + Math.random() * .65;
+    ctx.fillRect(s.x, s.y, s.size, s.size * 3);
+    s.y += s.speed;
+    if (s.y > canvas.height) {
+      s.y = -5;
+      s.x = Math.random() * canvas.width;
+    }
+  });
+
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(animate);
+}
+
+resize();
+animate();
+addEventListener('resize', resize);
+
+const audio = new Audio();
+const input = document.getElementById('song');
+const play = document.getElementById('play');
+
+input.onchange = () => {
+  if (input.files[0]) {
+    audio.src = URL.createObjectURL(input.files[0]);
+    audio.play();
+    play.textContent = '❚❚ Pause';
+  }
+};
+
+play.onclick = () => {
+  if (!audio.src) {
+    input.click();
+    return;
+  }
+
+  if (audio.paused) {
+    audio.play();
+    play.textContent = '❚❚ Pause';
+  } else {
+    audio.pause();
+    play.textContent = '▶ Play';
+  }
+};
+
+// Edit teks dan waktu lirik sendiri di sini.
+const lyrics = [
+  { time: 0, text: '5 hari sudah ku rindu' },
+  { time: 5, text: 'Lima hari sudah kurindu
+Tak bisa ku menghubungimu
+Kau sedang dengan dirinya
+Sedang kita rahasia
+Kapankah kau ada waktu
+Sembunyi untuk bertemu?
+Baru kau sapa, ku tersipu
+Kau puji, lupa amarahku
+Karena kau paling tahu
+Cara lemahkan hatiku
+Walau tak ada yang pasti
+Yang kau beri hanya mimpi
+Lantas mengapa ku masih menaruh hati?
+Padahal ku tahu kau telah terikat janji
+Keliru ataukah bukan? Tak tahu
+Lupakanmu, tapi aku tak mau
+Oh-oh
+Baru kau sapa, ku tersipu (tersipu)
+Kau puji, lupa amarahku
+Karena kau paling tahu (paling tahu)
+Cara lemahkan hatiku (hatiku)
+Walau tak ada yang pasti
+Yang kau beri hanya mimpi
+Lantas mengapa ku masih menaruh hati?
+Padahal ku tahu kau telah terikat janji
+Keliru ataukah bukan? Tak tahu
+Lupakanmu, tapi aku tak mau
+Pantaskah aku menyimpan rasa cemburu?
+Padahal bukan aku yang memilikimu
+Sanggup sampai kapankah? Ku tak tahu
+Akankah akal sehat menyadarkanku?
+Oh-oh, oh-oh-oh, oh-oh-oh
+Uh-uh
+Lantas mengapa ku masih menaruh hati?
+Lantas mengapa ku masih menaruh hati?
+Padahal ku tahu kau telah terikat janji
+Keliru ataukah bukan? Tak tahu
+Lupakanmu, tapi aku tak mau (pantaskah ku)
+Pantaskah aku (untuk menyimpan)
+Untuk menyimpan (rasa cemburu?)
+Karena bukan aku yang milikimu
+Sanggup sampai kapankah? Ku tak tahu
+Akankah akal sehat menyadarkanku?
+Source: Musixmatch
+Songwriters: Denis Ligia / Iqbal Siregar
+Lantas lyrics © Pt Ekspresi Mahakarya Indonesia
+Simak video lirik resmi lagu Lantas dari Juicy Luicy untuk mendengarkan alunan musiknya secara lengkap:...' },
+  { time: 10, text: 'Another line...' }
+];
+
+audio.ontimeupdate = () => {
+  const current = [...lyrics].reverse()
+    .find(line => audio.currentTime >= line.time);
+
+  if (current) {
+    document.getElementById('lyric').textContent = current.text;
+  }
+};
+</script>
+</body>
+</html>
